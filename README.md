@@ -1,14 +1,14 @@
 # Training a Model with Azure ML and Azure Functions
 
-Automating the training of new model given new code and/or new data and labels provided by a data scientist, is a challenge for the dev ops or app development professional.  This challenge is what is addressed here.  A general solution would be to integrate model training into an Azure Function.  Read on for more details.
+Automating the training of new ML model given code updates and/or new data with labels provided by a data scientist, can pose a challenge on the dev ops or app development side due to the manual nature of data science work.  One solution would be to use a training script (written by the data scientist) via an Azure Function (managed by the app developer) to train an ML model on a seperate compute triggered in an automated fashion (managed by the dev ops professional).
 
-The intent of this repository is to communicate the process of training a model using a Python-based Azure Function and the Azure ML Python SDK and to provide a code sample for doing so.  Training a model with the Azure ML Python SDK involves setting, possibly provisioning and consuming an Azure Compute option (e.g. an N-Series Data Science Virtual Machine) - the model _is not_ trained within the Azure Function Consumption Plan.  Triggers for the Azure Function could be HTTP, Azure Blob Storage containers via Event Grid, or by other means.
+The intent of this repository is to communicate the process of training a model using a Python-based Azure Function and the Azure ML Python SDK, as well as, to provide a code sample for doing so.  Training a model with the Azure ML Python SDK involves setting, possibly provisioning and consuming an Azure Compute option (e.g. an N-Series Data Science Virtual Machine) - the model _is not_ trained within the Azure Function Consumption Plan.  Triggers for the Azure Function could be HTTP, Azure Blob Storage containers via Event Grid, or by other means.
 
-The motivation behind this process was to provide a way to automate the model training process once the data scientist had provided new data and labels which were stored in Azure Blob containers.  The idea is that once new labels were provided, it would signal training a new model and subsequently performing evaluation and A/B testing.  The downstream event from the Azure Function could be moving a model to a separate "models" Blob container.  This new model could, then, be part of an IoT Edge Module build, for example, or other app build and release.
+The motivation behind this process was to provide a way to automate the model training process once the data scientist had provided new data _and_ labels which were stored in Azure Blob containers.  The idea is that once new labels were provided, it would signal training a new model and subsequently performing evaluation and A/B testing.  The downstream event from the Azure Function could be moving a model to a separate "models" Blob container.  This new model could, then, be part of an IoT Edge Module build, for example, or other app build and release.
 
-The following diagram represents this process as part of a larger deployment.
+The following example diagram represents this process as part of a larger deployment.
 
-<img src="images/arch_diagram.png" width="70%" alignment="center">
+<img src="images/arch_diagram.png" width="100%">
 
 ## Instructions
 
