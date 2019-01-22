@@ -8,7 +8,7 @@ The motivation behind this process was to provide a way to automate the model tr
 
 The following diagram represents this process as part of a larger deployment.
 
-<img src="../images/arch_diagram.png" width="70%" alignment="center">
+<img src="images/arch_diagram.png" width="70%" alignment="center">
 
 ## Instructions
 
