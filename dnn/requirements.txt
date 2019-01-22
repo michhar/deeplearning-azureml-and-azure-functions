@@ -1,0 +1,6 @@
+PyYAML~=3.13
+azure-cli-core==2.0.54
+azureml-sdk==1.0.8
+azure-functions==1.0.0a5
+azure-functions-worker==1.0.0a6
+requests==2.20.1
