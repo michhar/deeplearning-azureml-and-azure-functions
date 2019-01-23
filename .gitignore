@@ -1,5 +1,7 @@
 .vscode
 .DS_Store
+project
+config.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
