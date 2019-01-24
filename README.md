@@ -15,27 +15,27 @@ The following example diagram represents this process as part of a larger deploy
 The instruction below is only an example - it follows [this Azure Docs tutorial](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-function-python) which should be referenced as needed.
 
 
-
 The commands are listed here for quick reference (but if it doesn't work, check doc above as it may have updated - note, you will still need to `pip install requirements.txt` to test locally):
 
 ### Set up virtual environment
 
-In a bash terminal, make a directory for the azure function and `cd` into it.
+In a bash terminal, `cd` into the `dnn` folder.
 
-* Create a fresh env for each function
+* Create a fresh virtual environment for each function
 * Make sure `.env` resides in main folder (same place you find `requirements.txt`)
+* Use the `pip` installer from the virtual environment
 
 ```
     python3.6 -m venv .env
 
     source .env/bin/activate
+
+    .env/bin/pip install -r requirements.txt
 ```
 
 ### Test function locally
 
-```
-    pip install -r requirements.txt
-    
+```   
     func host start
 ```
 
@@ -54,7 +54,17 @@ In a bash terminal, make a directory for the azure function and `cd` into it.
     func azure functionapp publish dnnfuncapp --build-native-deps
 ```
 
-Add `AZURE_SUB` as a key/value pair (using your subscription id) under **Application settings** in the "Application settings" configuration link/tab. 
+ Add as a key/value pairs, the following (using your subscription id, workspace used with Azure ML and the Azure ML workspace - create these if they don't exist - [with code](https://docs.microsoft.com/en-us/azure/machine-learning/service/quickstart-create-workspace-with-python) or [in Azure Portal](https://docs.microsoft.com/en-us/azure/machine-learning/service/quickstart-get-started)) under **Application settings** in the "Application settings" configuration link/tab.  
+
+1. `AZURE_SUB`
+2. `RESOURCE_GROUP`
+3. `WORKSPACE_NAME`
+4. `STORAGE_CONTAINER_NAME_TRAINDATA`
+5. `STORAGE_CONTAINER_NAME_MODELS`
+5. `STORAGE_ACCOUNT_NAME`
+6. `STORAGE_ACCOUNT_KEY`
+
+Read about how to access data in blob and elsewhere with the AzureML Python SDK [here](https://docs.microsoft.com/en-us/azure/machine-learning/service/how-to-access-data).
 
 ### Test deployment
 

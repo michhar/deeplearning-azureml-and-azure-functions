@@ -2,6 +2,8 @@
 .DS_Store
 project
 config.json
+data
+.vars
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
