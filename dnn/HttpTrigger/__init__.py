@@ -13,7 +13,8 @@ import json
 def main(req: func.HttpRequest) -> (func.HttpResponse):
     logging.info('Python HTTP trigger function processed a request.')
 
-    image_url = req.params.get('img')
+    # For now this can be a POST where we have <base url>/api/HttpTrigger?start=<any string>
+    image_url = req.params.get('start')
     logging.info(type(image_url))
 
     # Write a config.json (fill in template values with system vars)
@@ -41,15 +42,16 @@ def main(req: func.HttpRequest) -> (func.HttpResponse):
         
 
     # choose a name for your cluster
-    cluster_name = "gpucluster"
+    cluster_name = "gpuclusterplease"
 
     try:
         compute_target = ComputeTarget(workspace=ws, name=cluster_name)
         print('Found existing compute target.')
     except ComputeTargetException:
         print('Creating a new compute target...')
-        compute_config = AmlCompute.provisioning_configuration(vm_size='STANDARD_NC6', 
-                                                            max_nodes=4)
+        # AML Compute config - if max_nodes are set, it becomes persistent storage that scales
+        compute_config = AmlCompute.provisioning_configuration(vm_size='STANDARD_NC6')
+                                                            # max_nodes=4)
         # create the cluster
         compute_target = ComputeTarget.create(ws, cluster_name, compute_config)
         compute_target.wait_for_completion(show_output=True)
@@ -89,7 +91,7 @@ def main(req: func.HttpRequest) -> (func.HttpResponse):
         '--num_epochs': 30,
         '--learning_rate': 0.01,
         '--output_dir': './outputs',
-        '--trans': True
+        '--trans': 'True'
     }
 
     # Instantiate PyTorch estimator with upload of final model to
@@ -99,8 +101,9 @@ def main(req: func.HttpRequest) -> (func.HttpResponse):
                         compute_target=compute_target,
                         entry_script='pytorch_train.py',
                         use_gpu=True,
-                        inputs=[ds_models.as_upload(path_on_compute='./model_finetuned.pth')])
+                        inputs=[ds_models.as_upload(path_on_compute='./outputs/model_finetuned.pth')])
 
     run = experiment.submit(estimator)
+    run.wait_for_completion(show_output=True)
 
-    return json.dumps('foo')
+    return json.dumps('Job complete')

@@ -1,21 +1,30 @@
-# Training a Model with Azure ML and Azure Functions
+# Training a Model with AzureML and Azure Functions
 
-Automating the training of new ML model given code updates and/or new data with labels provided by a data scientist, can pose a challenge on the dev ops or app development side due to the manual nature of data science work.  One solution would be to use a training script (written by the data scientist) via an Azure Function (managed by the app developer) to train an ML model on a seperate compute triggered in an automated fashion (managed by the dev ops professional).
+Automating the training of new ML model given code updates and/or new data with labels provided by a data scientist, can pose a challenge in the context of the dev ops or app development process due to the manual nature of data science work.  One solution would be to use a training script (written by the data scientist) with the AzureML Python SDK via an Azure Function (managed by the app developer) to train an ML model on a seperate compute triggered in an automated fashion (managed by the dev ops professional).
 
-The intent of this repository is to communicate the process of training a model using a Python-based Azure Function and the Azure ML Python SDK, as well as, to provide a code sample for doing so.  Training a model with the Azure ML Python SDK involves setting, possibly provisioning and consuming an Azure Compute option (e.g. an N-Series Data Science Virtual Machine) - the model _is not_ trained within the Azure Function Consumption Plan.  Triggers for the Azure Function could be HTTP, Azure Blob Storage containers via Event Grid, or by other means.
+The intent of this repository is to communicate the process of training a model using a Python-based Azure Function and the AzureML Python SDK, as well as, to provide a code sample for doing so.  Training a model with the AzureML Python SDK involves setting, possibly provisioning and consuming an Azure Compute option (e.g. an N-Series AML Compute) - the model _is not_ trained within the Azure Function Consumption Plan.  Triggers for the Azure Function could be HTTP, Azure Blob Storage containers via Event Grid, or by other means.
 
-The motivation behind this process was to provide a way to automate the model training process once the data scientist had provided new data _and_ labels which were stored in Azure Blob containers.  The idea is that once new labels were provided, it would signal training a new model and subsequently performing evaluation and A/B testing.  The downstream event from the Azure Function could be moving a model to a separate "models" Blob container.  This new model could, then, be part of an IoT Edge Module build, for example, or other app build and release.
+The motivation behind this process was to provide a way to automate ML model training/retraining once the data scientist had provided new data _and_ labels which were stored in separate Azure Blob containers.  The idea is that once new labels were provided, it would signal training a new model and subsequently performing evaluation and A/B testing.  The downstream event from the Azure Function could be moving a model to a separate "models" Blob container.  This new model could, then, be part of an Azure DevOps Pipeline build/release, for example.
 
-The following example diagram represents this process as part of a larger deployment.
+The following diagram represents this process as part of a larger deployment.  In this case and IoT Edge Module is built and placed in Azure Container Registry to deploy down to the Edge.
 
 <img src="images/arch_diagram.png" width="100%">
 
 ## Instructions
 
-The instruction below is only an example - it follows [this Azure Docs tutorial](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-function-python) which should be referenced as needed.
+The instructions below are an example - it follows [this Azure Docs tutorial](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-function-python) which should be referenced as needed.
 
+The commands are listed here for quick reference (but if errors are encountered, check the docs link above, as it may have updated - note, the dev will still need to `pip install requirements.txt` inside the virtual environment to test locally).
 
-The commands are listed here for quick reference (but if it doesn't work, check doc above as it may have updated - note, you will still need to `pip install requirements.txt` to test locally):
+### Data setup
+
+In this example the labels are `fish`/`not_fish` for a binary classification scenario in this example which uses the PyTorch framework.  The data structure in this repo is shown in the following image.  For adding training data, use this structure for the scripts to function correctly.
+
+A `train` and `val` folder are both required for training.  The folders under `train` and `val` are used in PyTorch's `datasets.ImageFolderImage()` function that delineates the labels using folder names, a common pattern for classification.
+
+Notice that the `data` folder is under the Function's `HttpTrigger` folder.
+
+<img src="images/data_file_structure.png" width="40%">
 
 ### Set up virtual environment
 
@@ -49,27 +58,31 @@ In a bash terminal, `cd` into the `dnn` folder.
     az storage account create --name azfuncstorage123 --location westus --resource-group azfunc --sku Standard_LRS
 
     az functionapp create --resource-group azfunc --os-type Linux --consumption-plan-location westus --runtime python --name dnnfuncapp --storage-account azfuncstorage123
-
     
     func azure functionapp publish dnnfuncapp --build-native-deps
 ```
 
- Add as a key/value pairs, the following (using your subscription id, workspace used with Azure ML and the Azure ML workspace - create these if they don't exist - [with code](https://docs.microsoft.com/en-us/azure/machine-learning/service/quickstart-create-workspace-with-python) or [in Azure Portal](https://docs.microsoft.com/en-us/azure/machine-learning/service/quickstart-get-started)) under **Application settings** in the "Application settings" configuration link/tab.  
+ Add as a key/value pairs, the following under **Application settings** in the "Application settings" configuration link/tab in the Azure Portal under the Azure Function App in use (using your subscription id, workspace used with Azure ML and the .
 
-1. `AZURE_SUB`
-2. `RESOURCE_GROUP`
-3. `WORKSPACE_NAME`
-4. `STORAGE_CONTAINER_NAME_TRAINDATA`
-5. `STORAGE_CONTAINER_NAME_MODELS`
-5. `STORAGE_ACCOUNT_NAME`
-6. `STORAGE_ACCOUNT_KEY`
+1. `AZURE_SUB` - your Azure Subscription id
+2. `RESOURCE_GROUP` - the resource group in which AzureML Workspace is found
+3. `WORKSPACE_NAME` - the AzureML Workspace name (create this if it doesn't exist - [with code](https://docs.microsoft.com/en-us/azure/machine-learning/service/quickstart-create-workspace-with-python) or [in Azure Portal](https://docs.microsoft.com/en-us/azure/machine-learning/service/quickstart-get-started))
+4. `STORAGE_CONTAINER_NAME_TRAINDATA` - the Blob Storage container name containing the training data
+5. `STORAGE_CONTAINER_NAME_MODELS` - the specific Blob Storage container where the output model should go
+5. `STORAGE_ACCOUNT_NAME` - the Storage Account name for the blobs
+6. `STORAGE_ACCOUNT_KEY` - the Storage Account access key
 
-Read about how to access data in blob and elsewhere with the AzureML Python SDK [here](https://docs.microsoft.com/en-us/azure/machine-learning/service/how-to-access-data).
+Read about how to access data in Blob and elsewhere with the AzureML Python SDK [here](https://docs.microsoft.com/en-us/azure/machine-learning/service/how-to-access-data).
 
 ### Test deployment
 
+For now this can be a POST where we have `https://<base url>/api/HttpTrigger?start=<any string>`, where `start` is specified as the parameter in the Azure Function `__init__.py` code.
+
+
+One way to call the Function App, for e.g., is:
+
 ```
-    curl https://dnnfuncapp.azurewebsites.net/api/HttpTrigger?<a key defined in code>=<some test value>
+    curl https://dnnfuncapp.azurewebsites.net/api/HttpTrigger?start=foo
 ```
 
 

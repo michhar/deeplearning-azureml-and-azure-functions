@@ -68,7 +68,7 @@ def load_data(data_dir):
         ]),
     }
 
-    image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x),
+    image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, 'data', x),
                                               data_transforms[x])
                       for x in ['train', 'val']}
     dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=4,
@@ -185,6 +185,9 @@ def fine_tune_model(num_epochs, data_dir, learning_rate, momentum, transfer_lear
     model = train_model(model_ft, criterion, optimizer_ft,
                         exp_lr_scheduler, num_epochs, data_dir)
 
+    # Complete the run
+    run.complete()
+
     return model
 
 def main():
@@ -200,7 +203,7 @@ def main():
                         default='models')
     parser.add_argument('--learning_rate', type=float,
                         default=0.001, help='learning rate')
-    parser.add_argument('--trans', type=bool, default=True,
+    parser.add_argument('--trans', type=str, default='True',
                         help='Set to True if wishing to use transfer learning')
     parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
     args = parser.parse_args()
@@ -208,7 +211,7 @@ def main():
     print("data directory is: {}".format(args.data_dir))
     print("using transfer learning: {}".format(args.trans))
     model = fine_tune_model(args.num_epochs, args.data_dir,
-                            args.learning_rate, args.momentum, args.trans)
+                            args.learning_rate, args.momentum, bool(args.trans))
     os.makedirs(args.output_dir, exist_ok=True)
     torch.save(model, os.path.join(args.output_dir, 'model_finetuned.pth'))
 
