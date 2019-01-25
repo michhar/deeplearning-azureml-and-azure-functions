@@ -50,8 +50,8 @@ def main(req: func.HttpRequest) -> (func.HttpResponse):
     except ComputeTargetException:
         print('Creating a new compute target...')
         # AML Compute config - if max_nodes are set, it becomes persistent storage that scales
-        compute_config = AmlCompute.provisioning_configuration(vm_size='STANDARD_NC6')
-                                                            # max_nodes=4)
+        compute_config = AmlCompute.provisioning_configuration(vm_size='STANDARD_NC6',
+                                                            max_nodes=4)
         # create the cluster
         compute_target = ComputeTarget.create(ws, cluster_name, compute_config)
         compute_target.wait_for_completion(show_output=True)

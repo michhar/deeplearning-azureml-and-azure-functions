@@ -62,9 +62,9 @@ In a bash terminal, `cd` into the `dnn` folder.
     func azure functionapp publish dnnfuncapp --build-native-deps
 ```
 
- Add as a key/value pairs, the following under **Application settings** in the "Application settings" configuration link/tab in the Azure Portal under the Azure Function App in use (using your subscription id, workspace used with Azure ML and the .
+ Add as a key/value pairs, the following under **Application settings** in the "Application settings" configuration link/tab in the Azure Portal under the published Azure Function App.
 
-1. `AZURE_SUB` - your Azure Subscription id
+1. `AZURE_SUB` - the Azure Subscription id
 2. `RESOURCE_GROUP` - the resource group in which AzureML Workspace is found
 3. `WORKSPACE_NAME` - the AzureML Workspace name (create this if it doesn't exist - [with code](https://docs.microsoft.com/en-us/azure/machine-learning/service/quickstart-create-workspace-with-python) or [in Azure Portal](https://docs.microsoft.com/en-us/azure/machine-learning/service/quickstart-get-started))
 4. `STORAGE_CONTAINER_NAME_TRAINDATA` - the Blob Storage container name containing the training data
@@ -76,7 +76,7 @@ Read about how to access data in Blob and elsewhere with the AzureML Python SDK 
 
 ### Test deployment
 
-For now this can be a POST where we have `https://<base url>/api/HttpTrigger?start=<any string>`, where `start` is specified as the parameter in the Azure Function `__init__.py` code.
+For now this can be a POST request using `https://<base url>/api/HttpTrigger?start=<any string>`, where `start` is specified as the parameter in the Azure Function `__init__.py` code and the value is any string (this is a potential entrypoint for passing a variable to the Azure Function in the future).
 
 
 One way to call the Function App, for e.g., is:
