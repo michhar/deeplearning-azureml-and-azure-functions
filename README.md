@@ -1,12 +1,14 @@
 # Training a Model with AzureML and Azure Functions
 
+_Work in progress/not ready for production_
+
 Automating the training of new ML model given code updates and/or new data with labels provided by a data scientist, can pose a challenge in the context of the dev ops or app development process due to the manual nature of data science work.  One solution would be to use a training script (written by the data scientist) with the AzureML Python SDK via an Azure Function (managed by the app developer) to train an ML model on a seperate compute triggered in an automated fashion (managed by the dev ops professional).
 
 The intent of this repository is to communicate the process of training a model using a Python-based Azure Function and the AzureML Python SDK, as well as, to provide a code sample for doing so.  Training a model with the AzureML Python SDK involves setting, possibly provisioning and consuming an Azure Compute option (e.g. an N-Series AML Compute) - the model _is not_ trained within the Azure Function Consumption Plan.  Triggers for the Azure Function could be HTTP, Azure Blob Storage containers via Event Grid, or by other means.
 
 The motivation behind this process was to provide a way to automate ML model training/retraining once the data scientist had provided new data _and_ labels which were stored in separate Azure Blob containers.  The idea is that once new labels were provided, it would signal training a new model and subsequently performing evaluation and A/B testing.  The downstream event from the Azure Function could be moving a model to a separate "models" Blob container.  This new model could, then, be part of an Azure DevOps Pipeline build/release, for example.
 
-The following diagram represents this process as part of a larger deployment.  In this case and IoT Edge Module is built and placed in Azure Container Registry to deploy down to the Edge.
+The following diagram represents this process as part of a larger deployment where the Function, triggered via a Blob update (usually with Event Grid - not shown), calls another Function (via HTTP) which triggers the build and release of an app in Azure DevOps Pipelines.  For instance, this app could be an IoT Edge Module, which is pushed into Azure Container Registry to deploy down to the Edge.  The highlighted region below, invovling Storage, AzureML and Functions, is addressed in the Python-based example below.
 
 <img src="images/arch_diagram.png" width="100%">
 
@@ -24,7 +26,7 @@ A `train` and `val` folder are both required for training.  The folders under `t
 
 Notice that the `data` folder is under the Function's `HttpTrigger` folder.
 
-<img src="images/data_file_structure.png" width="40%">
+<img src="images/data_file_structure.png" width="25%">
 
 ### Set up virtual environment
 
@@ -85,7 +87,11 @@ One way to call the Function App, for e.g., is:
     curl https://dnnfuncapp.azurewebsites.net/api/HttpTrigger?start=foo
 ```
 
+This may time out, but don't worry if this happens.  For proof of successful execution check for a completed AzureML Experiment run in the Azure Portal ML Workspace and look for the model in the blob storage as well (specified earlier in STORAGE_CONTAINER_NAME_MODELS).
 
+## References
+
+1. [How to call another function with in an Azure function (StackOverflow)](https://stackoverflow.com/questions/46315734/how-to-call-another-function-with-in-an-azure-function)
 
 
 
