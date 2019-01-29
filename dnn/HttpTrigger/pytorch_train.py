@@ -165,7 +165,7 @@ def fine_tune_model(num_epochs, data_dir, learning_rate, momentum, transfer_lear
     run.log('lr', np.float(learning_rate))
     run.log('momentum', np.float(momentum))
 
-    model_ft = models.resnet18(pretrained=transfer_learn)
+    model_ft = models.squeezenet1_1(pretrained=transfer_learn)
     num_ftrs = model_ft.fc.in_features
     model_ft.fc = nn.Linear(num_ftrs, 2)  # only 2 classes to predict
 

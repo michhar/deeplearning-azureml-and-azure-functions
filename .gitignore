@@ -4,6 +4,7 @@ project
 config.json
 data
 .vars
+*.cmd
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
