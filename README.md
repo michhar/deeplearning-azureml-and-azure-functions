@@ -2,13 +2,15 @@
 
 _Work in progress/not ready for production_
 
-Automating the training of new ML model given code updates and/or new data with labels provided by a data scientist, can pose a challenge in the context of the dev ops or app development process due to the manual nature of data science work.  One solution would be to use a training script (written by the data scientist) with the AzureML Python SDK within an Azure Function (managed by the app developer) to train an ML model on a seperate compute (automatically performed) and trigger a build/release an intelligent application (managed by the app developer and dev ops professional).
+Automating the training of new ML model given code updates and/or new data with labels provided by a data scientist, can pose a challenge in the context of the dev ops or app development process due to the manual nature of data science work.  One solution would be to use a training script (written by the data scientist) with the <a href="https://docs.microsoft.com/en-us/python/api/overview/azure/ml/intro?view=azure-ml-py" target="_blank">Azure Machine Learning SDK for Python</a> (Azure ML Python SDK) run with a lightweight Azure Function that sends a training script to larger compute (process managed by the dev ops professional) to train an ML model (automatically performed when new data appears).  This, then, triggers the build and release of an intelligent application (managed by the app developer).
 
-The intent of this repository is to communicate the process of training a model using a Python-based Azure Function and the AzureML Python SDK, as well as, to provide a code sample for doing so.  Training a model with the AzureML Python SDK involves setting, possibly provisioning and consuming an Azure Compute option (e.g. an N-Series AML Compute) - the model _is not_ trained within the Azure Function Consumption Plan.  Triggers for the Azure Function could be HTTP, Event Grid or, as proposed in the architecture below, a Logic App.
+The intent of this repository is to communicate the process of training a model using a Python-based Azure Function and the Azure ML Python SDK, as well as, to provide a code sample for doing so.  Training a model with the Azure ML Python SDK involves utilizing an Azure Compute option (e.g. an N-Series AML Compute) - the model **_is not_** trained within the Azure Function Consumption Plan.  Triggers for the Azure Function could be HTTP Requests, an Event Grid or some other <a href="https://docs.microsoft.com/en-us/azure/azure-functions/functions-triggers-bindings"  target="_blank">trigger</a>.
 
-The motivation behind this process was to provide a way to automate ML model training/retraining once new data is provided _and potentially_ labels which are stored Azure Storage Blob containers.  The idea is that once new data is provided, it would signal training a new model and subsequently performing evaluation and A/B testing.  The downstream event from the Azure Function could be moving a model to a separate "models" Blob container.  This new model could, then, be part of an Azure DevOps Pipeline build/release, for example.
+The motivation behind this process was to provide a way to automate ML model training/retraining in a lightweight, serverless fashion, once new data is provided _and potentially_ labels which are stored Azure Storage Blob containers.  This solution is especially attractive for people familiar with <a href="https://docs.microsoft.com/en-us/azure/azure-functions/functions-overview" target="_blank">Azure Functions</a>.
 
-The following diagram represents this process as part of a larger deployment where, for example, Blob data ingress/update triggers a Logic App that starts the Function App, after a human approves, and thus, runs the AzureML training script producing an ML model to be stored back into Blob.  If the Function App and AzureML experiment produces a more performant model than the one already in production it can trigger the Logic App to queue an Azure DevOps build and release of an application that packagesa and consumes the ML model for inferencing.  The highlighted region below, involving Storage, AzureML and Functions, is the focus of this Python-based example.
+The idea is that once new data is provided, it would signal training a new model via an Event Grid - note that the _training is actually done on a separate compute_, not in the Function.  The Azure ML SDK can be set up to output a model to a user-specified Storage option, here shown as the "Trained Models" Blob Storage Container.  Another lightweight Function, triggered by Event Grid, may be used to send an HTTP request to an Azure DevOps build Pipeline to create the final application.
+
+The following diagram represents an example process as part of a larger deployment.  The end product or application could be an IoT Edge module, web service or any other application a DevOps build/release can produce.
 
 <img src="images/arch_diagram.png" width="100%">
 
@@ -91,7 +93,11 @@ This may time out, but don't worry if this happens.  For proof of successful exe
 
 ## References
 
-1. [How to call another function with in an Azure function (StackOverflow)](https://stackoverflow.com/questions/46315734/how-to-call-another-function-with-in-an-azure-function)
+1. <a target="_blank" href="https://docs.microsoft.com/en-us/rest/api/azure/devops/build/Builds/Queue?view=azure-devops-rest-5.1">Queue an Azure DevOps Build with HTTP request</a>
+2. <a href="https://docs.microsoft.com/en-us/azure/machine-learning/service/overview-what-is-azure-ml" target="_blank">Azure Machine Learning Services Overview</a>
+3. <a href="https://docs.microsoft.com/en-us/azure/machine-learning/service/how-to-access-data" target="_blank">Using a Azure Storage with Azure ML Python SDK</a>
+4. <a href="https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-function-python" target="_blank">Python Azure Functions</a>
+5. [How to call another function with in an Azure function (StackOverflow)](https://stackoverflow.com/questions/46315734/how-to-call-another-function-with-in-an-azure-function)
 
 
 
