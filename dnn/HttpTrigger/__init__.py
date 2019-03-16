@@ -8,6 +8,7 @@ from azureml.train.dnn import PyTorch
 import shutil
 import os
 import json
+import time
 
 
 def main(req: func.HttpRequest) -> (func.HttpResponse):
@@ -41,8 +42,8 @@ def main(req: func.HttpRequest) -> (func.HttpResponse):
 
         
 
-    # choose a name for your cluster
-    cluster_name = "gpuclusterplease"
+    # choose a name for your cluster - under 16 characters
+    cluster_name = "gpuforpytorch"
 
     try:
         compute_target = ComputeTarget(workspace=ws, name=cluster_name)
@@ -51,13 +52,14 @@ def main(req: func.HttpRequest) -> (func.HttpResponse):
         print('Creating a new compute target...')
         # AML Compute config - if max_nodes are set, it becomes persistent storage that scales
         compute_config = AmlCompute.provisioning_configuration(vm_size='STANDARD_NC6',
-                                                            max_nodes=4)
+                                                            min_nodes=0,
+                                                            max_nodes=2)
         # create the cluster
         compute_target = ComputeTarget.create(ws, cluster_name, compute_config)
         compute_target.wait_for_completion(show_output=True)
 
     # use get_status() to get a detailed status for the current cluster. 
-    print(compute_target.get_status().serialize())
+    # print(compute_target.get_status().serialize())
 
     # Create a project directory and copy training script to ii
     project_folder = os.path.join(os.getcwd(), 'HttpTrigger', 'project')
@@ -104,6 +106,11 @@ def main(req: func.HttpRequest) -> (func.HttpResponse):
                         inputs=[ds_models.as_upload(path_on_compute='./outputs/model_finetuned.pth')])
 
     run = experiment.submit(estimator)
-    run.wait_for_completion(show_output=True)
+    print(run.get_details())
+    
+    # # The following would certainly be blocking
+    # while run.get_status() not in ['Completed', 'Failed']: # For example purposes only, not exhaustive
+    #    print('Run {} not in terminal state'.format(run.id))
+    #    time.sleep(10)
 
-    return json.dumps('Job complete')
+    return json.dumps(run.get_status())
