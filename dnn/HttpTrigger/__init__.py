@@ -61,10 +61,10 @@ def main(req: func.HttpRequest) -> (func.HttpResponse):
     # use get_status() to get a detailed status for the current cluster. 
     # print(compute_target.get_status().serialize())
 
-    # Create a project directory and copy training script to ii
+    # # Create a project directory and copy training script to ii
     project_folder = os.path.join(os.getcwd(), 'HttpTrigger', 'project')
-    os.makedirs(project_folder, exist_ok=True)
-    shutil.copy(os.path.join(os.getcwd(), 'HttpTrigger', 'pytorch_train.py'), project_folder)
+    # os.makedirs(project_folder, exist_ok=True)
+    # shutil.copy(os.path.join(os.getcwd(), 'HttpTrigger', 'pytorch_train.py'), project_folder)
 
     # Create an experiment
     experiment_name = 'fish-no-fish'
@@ -88,11 +88,14 @@ def main(req: func.HttpRequest) -> (func.HttpResponse):
 
     # Set up for training ("trans" flag means - use transfer learning and 
     # this should download a model on compute)
+    # Using /tmp to store model and info due to the fact that
+    # creating new folders and files on the Azure Function host
+    # will trigger the function to restart.
     script_params = {
         '--data_dir': ds.as_mount(),
         '--num_epochs': 30,
         '--learning_rate': 0.01,
-        '--output_dir': './outputs',
+        '--output_dir': '/tmp/outputs',
         '--trans': 'True'
     }
 
@@ -108,7 +111,7 @@ def main(req: func.HttpRequest) -> (func.HttpResponse):
     run = experiment.submit(estimator)
     print(run.get_details())
     
-    # # The following would certainly be blocking
+    # # The following would certainly be blocking, but that's ok for debugging
     # while run.get_status() not in ['Completed', 'Failed']: # For example purposes only, not exhaustive
     #    print('Run {} not in terminal state'.format(run.id))
     #    time.sleep(10)
