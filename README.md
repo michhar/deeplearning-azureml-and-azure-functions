@@ -1,7 +1,5 @@
 # Training a Model with AzureML and Azure Functions
 
-_Work in progress/not ready for production_
-
 Automating the training of new ML model given code updates and/or new data with labels provided by a data scientist, can pose a challenge in the context of the dev ops or app development process due to the manual nature of data science work.  One solution would be to use a training script (written by the data scientist) with the <a href="https://docs.microsoft.com/en-us/python/api/overview/azure/ml/intro?view=azure-ml-py" target="_blank">Azure Machine Learning SDK for Python</a> (Azure ML Python SDK) run with a lightweight Azure Function that sends a training script to larger compute (process managed by the dev ops professional) to train an ML model (automatically performed when new data appears).  This, then, triggers the build and release of an intelligent application (managed by the app developer).
 
 The intent of this repository is to communicate the process of training a model using a Python-based Azure Function and the Azure ML Python SDK, as well as, to provide a code sample for doing so.  Training a model with the Azure ML Python SDK involves utilizing an Azure Compute option (e.g. an N-Series AML Compute) - the model **_is not_** trained within the Azure Function Consumption Plan.  Triggers for the Azure Function could be HTTP Requests, an Event Grid or some other <a href="https://docs.microsoft.com/en-us/azure/azure-functions/functions-triggers-bindings"  target="_blank">trigger</a>.
@@ -20,6 +18,57 @@ The instructions below are an example - it follows [this Azure Docs tutorial](ht
 
 The commands are listed here for quick reference (but if errors are encountered, check the docs link above, as it may have updated - note, the dev will still need to `pip install requirements.txt` inside the virtual environment to test locally).
 
+Python 3.6 is being used with this sample, however Python 3.3+ should be sufficient.
+
+
+### Set up virtual environment
+
+In a bash terminal, `cd` into the `dnn` folder.
+
+Important notes:
+
+* It is good practice to create a fresh virtual environment for each function
+* Make sure `.env`, which holds the virtual environment, once created, resides in main folder (same place as `requirements.txt`)
+* Make sure to use the `pip` installer from the virtual environment
+
+**Create the virtual environment**
+
+The `venv` command is part of the Python standard library as of version 3.3.  Python 3.6 is being used in this sample.
+
+```
+    python3.6 -m venv .env
+```
+
+**Activate the virtual environment**
+
+On Windows, the command is:
+
+```
+    .env\Scripts\activate
+
+```
+
+On unix systems (including MacOS), the command is:
+```
+    source .env/bin/activate
+```
+
+**Install the required Python packages**
+
+Please check the `requirements.txt` file for versions of packages used.  If a more recent version is available it is ok to update after testing locally and in a staging environment.
+
+On Windows, the command is:
+
+```
+    .env\Scripts\pip install -r requirements.txt
+```
+
+On unix systems (including macOS), the command is:
+
+```
+    .env/bin/pip install -r requirements.txt
+```
+
 ### Data setup
 
 In this example the labels are `fish`/`not_fish` for a binary classification scenario in this example which uses the PyTorch framework.  The data structure in this repo is shown in the following image.  For adding training data, use this structure for the scripts to function correctly.
@@ -30,29 +79,38 @@ Notice that the `data` folder is under the Function's `HttpTrigger` folder.
 
 <img src="images/data_file_structure.png" width="25%">
 
-### Set up virtual environment
-
-In a bash terminal, `cd` into the `dnn` folder.
-
-* Create a fresh virtual environment for each function
-* Make sure `.env` resides in main folder (same place you find `requirements.txt`)
-* Use the `pip` installer from the virtual environment
-
-```
-    python3.6 -m venv .env
-
-    source .env/bin/activate
-
-    .env/bin/pip install -r requirements.txt
-```
 
 ### Test function locally
+
+**Start the function**
+
+From the `dnn` folder:
 
 ```   
     func host start
 ```
 
+Information similar to the following should appear:
+
+![testing locally url](images/testing_locally.png)
+
+This provides a URL with which to use as a POST HTTP call.
+
+**Call the function**
+
+For now this can be a POST request using `https://<base url>/api/HttpTrigger?start=<any string>`, where `start` is specified as the parameter in the Azure Function `__init__.py` code and the value is any string for this sample (note:  this is a potential entrypoint for passing a variable to the Azure Function in the future).
+
+
+One way to call the Function App, for e.g., is:
+
+```
+    curl http://localhost:7071/api/HttpTrigger?start=foo
+```
+
+
 ### Deploy function to Azure
+
+Use the following commands to deploy the function to Azure.
 
 ```
     az login
@@ -98,6 +156,7 @@ This may time out, but don't worry if this happens.  For proof of successful exe
 3. <a href="https://docs.microsoft.com/en-us/azure/machine-learning/service/how-to-access-data" target="_blank">Using a Azure Storage with Azure ML Python SDK</a>
 4. <a href="https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-function-python" target="_blank">Python Azure Functions</a>
 5. [How to call another function with in an Azure function (StackOverflow)](https://stackoverflow.com/questions/46315734/how-to-call-another-function-with-in-an-azure-function)
+6.  [Creation of virtual environments](https://docs.python.org/3/library/venv.html)
 
 
 
