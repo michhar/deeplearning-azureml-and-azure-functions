@@ -1,3 +1,12 @@
+---
+topic: sample
+languages:
+    - python
+products:
+    - azure-functions
+author: michhar
+---
+
 # Training a Model with AzureML and Azure Functions
 
 Automating the training of new ML model given code updates and/or new data with labels provided by a data scientist, can pose a challenge in the context of the dev ops or app development process due to the manual nature of data science work.  One solution would be to use a training script (written by the data scientist) with the <a href="https://docs.microsoft.com/en-us/python/api/overview/azure/ml/intro?view=azure-ml-py" target="_blank">Azure Machine Learning SDK for Python</a> (Azure ML Python SDK) run with a lightweight Azure Function that sends a training script to larger compute (process managed by the dev ops professional) to train an ML model (automatically performed when new data appears).  This, then, triggers the build and release of an intelligent application (managed by the app developer).
@@ -12,18 +21,24 @@ The following diagram represents an example process as part of a larger deployme
 
 <img src="images/arch_diagram.png" width="100%">
 
-## Instructions
+# Getting Started
 
 The instructions below are an example - it follows [this Azure Docs tutorial](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-function-python) which should be referenced as needed.
 
-The commands are listed here for quick reference (but if errors are encountered, check the docs link above, as it may have updated - note, the dev will still need to `pip install requirements.txt` inside the virtual environment to test locally).
+The commands are listed here for quick reference (but if errors are encountered, check the docs link above for troubleshooting, as it may have updated).  Note, the dev will still need to `pip install requirements.txt` inside the virtual environment to test locall).
 
-Python 3.6 is being used with this sample, however Python 3.3+ should be sufficient.
+## Deploy Locally
 
+### Prerequisites
 
-### Set up virtual environment
+- Install Python 3.6+
+- Install [Functions Core Tools](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local#v2)
+- Install Docker
+- Note: If run on Windows, use Ubuntu WSL to run deploy script
 
-In a bash terminal, `cd` into the `dnn` folder.
+### Steps
+
+#### Set up virtual environment
 
 Important notes:
 
@@ -69,7 +84,7 @@ On unix systems (including macOS), the command is:
     .env/bin/pip install -r requirements.txt
 ```
 
-### Data setup
+#### Data setup
 
 In this example the labels are `fish`/`not_fish` for a binary classification scenario in this example which uses the PyTorch framework.  The data structure in this repo is shown in the following image.  For adding training data, use this structure for the scripts to function correctly.
 
@@ -80,11 +95,11 @@ Notice that the `data` folder is under the Function's `HttpTrigger` folder.
 <img src="images/data_file_structure.png" width="25%">
 
 
-### Test function locally
+#### Test locally
 
 **Start the function**
 
-From the `dnn` folder:
+From the base of the repo:
 
 ```   
     func host start
@@ -108,31 +123,55 @@ One way to call the Function App, for e.g., is:
 ```
 
 
-### Deploy function to Azure
+## Deploy function to Azure
 
-Use the following commands to deploy the function to Azure.
+Use the following commands to deploy the function to Azure from a local machine that _has this repo cloned locally_.
+
+Here is an example of deploying this sample to `westus` region.  Update the `--location`, `--name`'s, `resource-group`, and `--sku` as needed.
+
+Use the Azure CLI to log in.
 
 ```
     az login
+```
 
+Create a resource group for the Azure Function.
+
+```
     az group create --name azfunc --location westus
+```
 
+Create a storage account for the Azure Function.
+
+```
     az storage account create --name azfuncstorage123 --location westus --resource-group azfunc --sku Standard_LRS
 
+```
+
+Create the Azure Function.
+
+```
     az functionapp create --resource-group azfunc --os-type Linux --consumption-plan-location westus --runtime python --name dnnfuncapp --storage-account azfuncstorage123
-    
+
+```
+
+Publish the Azure Function.
+
+```
     func azure functionapp publish dnnfuncapp --build-native-deps
 ```
+
+Set up environment variables so that the AzureML and correct storage accounts may be accessed.
 
  Add as a key/value pairs, the following under **Application settings** in the "Application settings" configuration link/tab in the Azure Portal under the published Azure Function App.
 
 1. `AZURE_SUB` - the Azure Subscription id
 2. `RESOURCE_GROUP` - the resource group in which AzureML Workspace is found
 3. `WORKSPACE_NAME` - the AzureML Workspace name (create this if it doesn't exist - [with code](https://docs.microsoft.com/en-us/azure/machine-learning/service/quickstart-create-workspace-with-python) or [in Azure Portal](https://docs.microsoft.com/en-us/azure/machine-learning/service/quickstart-get-started))
-4. `STORAGE_CONTAINER_NAME_TRAINDATA` - the Blob Storage container name containing the training data
-5. `STORAGE_CONTAINER_NAME_MODELS` - the specific Blob Storage container where the output model should go
-5. `STORAGE_ACCOUNT_NAME` - the Storage Account name for the blobs
-6. `STORAGE_ACCOUNT_KEY` - the Storage Account access key
+4. `STORAGE_CONTAINER_NAME_TRAINDATA` - the Blob Storage container name containing the training data (in this sample is was fish images - see [Data setup](#data-setup) above.
+5. `STORAGE_CONTAINER_NAME_MODELS` - the specific Blob Storage container where the output model should go (this could be the same as the `STORAGE_CONTAINER_NAME_TRAINDATA`)
+5. `STORAGE_ACCOUNT_NAME` - the Storage Account name for the training and model blobs
+6. `STORAGE_ACCOUNT_KEY` - the Storage Account access key for the training and model blobs (Note:  these must be in the same Storage Account)
 
 Read about how to access data in Blob and elsewhere with the AzureML Python SDK [here](https://docs.microsoft.com/en-us/azure/machine-learning/service/how-to-access-data).
 
