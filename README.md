@@ -25,16 +25,24 @@ The following diagram represents an example process as part of a larger deployme
 
 The instructions below are an example - it follows [this Azure Docs tutorial](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-function-python) which should be referenced as needed.
 
-The commands are listed here for quick reference (but if errors are encountered, check the docs link above for troubleshooting, as it may have updated).
+The commands are listed here for quick reference (but if errors are encountered, check the docs link above for troubleshooting, as it may have been updated).
 
-### Prerequisites
+## Prerequisites
 
 - Install Python 3.6
 - Install [Functions Core Tools](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local#v2)
 - Install Docker
-- Note: If run on Windows, use Ubuntu WSL to run deploy script
+- Note: If run on Windows you can use Ubuntu WSL to run the scripts
 
 ## Steps
+
+In summary, the steps include the following sections.
+
+- [Deploy locally](#deploy-locally)
+- [Set up a Service Principal for AzureML](#set-up-a-service-principal-for-azureml)
+- [Data setup](#data-setup)
+- [Test locally](#test-locally)
+- [Deploy function to Azure](#deploy-function-to-azure)
 
 ### Deploy locally
 
@@ -70,23 +78,25 @@ source .env/bin/activate
 
 **Install the required Python packages**
 
-Please check the `requirements.txt` file for versions of packages used.  If a more recent version is available it is ok to update after testing locally and in a staging environment.
+Please check the `requirements.txt` file for versions of packages used.  
 
-On Windows, the command is:
+IMPORTANT NOTE:  If a more recent version of a package is available it is ok to update after testing locally and in a staging environment.
+
+On Windows, the command to install packages is as follows.
 
 ```
 .env\Scripts\pip install -r requirements.txt
 ```
 
-On unix systems (including macOS), the command is:
+On unix systems (including macOS), the command is as follows.
 
 ```
 .env/bin/pip install -r requirements.txt
 ```
 
-#### Set up a Service Principal as an Azure Active Directory registered application
+### Set up a Service Principal for AzureML
 
-This is so that we can authenticate in Azure in code, as we will do for the AzureML workspace, without a requirement for interactive or CLI-based login.
+This will set up an Azure Active Directory registered application so that we can authenticate in Azure in code, as we will do for the AzureML workspace, without a requirement for interactive or CLI-based login.
 
 Follow the brief instructions under "Service Principal Authentication" in <a href="https://github.com/Azure/MachineLearningNotebooks/blob/master/how-to-use-azureml/manage-azureml-service/authentication-in-azureml/authentication-in-azure-ml.ipynb" target="_blank">this doc</a> for setting up the application that will allow authentication more easily.
 
@@ -98,9 +108,7 @@ This is so that AzureML, Service Principal and correct storage accounts may be a
 
 **For local testing**
 
-Create a file called `set_vars.sh` with the following contents.
-
-Unix systems create a shell script `set_vars.sh` and run it in the shell where the work is being done:
+Unix systems create a shell script `set_vars.sh` to set environment variables in the current shell.  Run this in the bash terminal.
 
 ```
 export AZURE_SUB=<Azure subscription id>
@@ -115,7 +123,7 @@ export APP_ID=<registered application id>
 export PRINCIPAL_PASSWORD=<service principal password>
 ```
 
-On Windows create a script called `set_vars.cmd` and run it in the shell where the work is being done:
+On Windows create a script called `set_vars.cmd` and run it in the shell where the work is being done.
 
 ```
 set AZURE_SUB <Azure subscription id>
@@ -130,7 +138,7 @@ set APP_ID <registered application id>
 set PRINCIPAL_PASSWORD <service principal password>
 ```
 
-Run each file in a bash shell.
+Run each file in a bash shell/terminal window.
 
 Further descriptions of the environment variables are as follows.
 
@@ -149,7 +157,7 @@ Further descriptions of the environment variables are as follows.
 
  Add as a key/value pairs, when performing deployment to Azure, the following under **Application settings** in the "Application settings" configuration link/tab in the Azure Portal under the published Azure Function App.
 
-#### Data setup
+### Data setup
 
 In this example the labels are `fish`/`not_fish` for a binary classification scenario in this example which uses the PyTorch framework.  The data structure in this repo is shown in the following image.  For adding training data, use this structure so that the Python scripts may find the data.
 
@@ -160,17 +168,17 @@ Notice that the `data` folder is under the Function's `HttpTrigger` folder.
 <img src="images/data_file_structure.png" width="25%">
 
 
-#### Test locally
+### Test locally
 
 **Start the function**
 
-From the base of the repo run:
+From the base of the repo run the following.
 
 ```   
 func host start
 ```
 
-Information similar to the following should appear:
+Information similar to the following should appear.
 
 ![testing locally url](images/testing_locally.png)
 
@@ -181,7 +189,7 @@ This provides a URL with which to use as a POST HTTP call.
 For now this can be a POST request using `https://<base url>/api/HttpTrigger?start=<any string>`, where `start` is specified as the parameter in the Azure Function `__init__.py` code and the value is any string for this sample (note:  this is a potential entrypoint for passing a variable to the Azure Function in the future).
 
 
-One way to call the Function App, for e.g., is:
+One way to call the Function App is with the `curl` command.
 
 ```
 curl http://localhost:7071/api/HttpTrigger?start=foo
@@ -231,7 +239,6 @@ IMPORTANT NOTE:  Don't forget to add as a key/value pairs, when performing deplo
 #### Test deployment
 
 For now this can be a POST request using `https://<base url>/api/HttpTrigger?start=<any string>`, where `start` is specified as the parameter in the Azure Function `__init__.py` code and the value is any string (this is a potential entrypoint for passing a variable to the Azure Function in the future).
-
 
 One way to call the Function App, for e.g., is:
 
