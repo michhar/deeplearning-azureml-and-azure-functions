@@ -1,5 +1,6 @@
 import logging
 import azure.functions as func
+from azureml.core.authentication import ServicePrincipalAuthentication
 from azureml.core import Workspace, Experiment, Datastore
 from azureml.exceptions import ProjectSystemException
 from azureml.core.compute import ComputeTarget, AmlCompute
@@ -18,29 +19,35 @@ def main(req: func.HttpRequest) -> (func.HttpResponse):
     image_url = req.params.get('start')
     logging.info(type(image_url))
 
-    # Write a config.json (fill in template values with system vars)
-    config_temp = {'subscription_id': os.getenv('AZURE_SUB', ''),
-        'resource_group': os.getenv('RESOURCE_GROUP', ''),
-        'workspace_name': os.getenv('WORKSPACE_NAME', '')}
-    with open(os.path.join(os.getcwd(), 'HttpTrigger', 'config.json'), 'w') as f:
-        json.dump(config_temp, f)
+    # Use service principal secrets to create authentication vehicle and 
+    # define workspace object
+    try:    
+        svc_pr = ServicePrincipalAuthentication(
+            tenant_id=os.getenv('TENANT_ID', ''),
+            service_principal_id=os.getenv('APP_ID', ''),
+            service_principal_password=os.getenv('PRINCIPAL_PASSWORD', ''))
 
-    # Get the workspace from config.json
-    try:
-        ws = Workspace.from_config(os.path.join(os.getcwd(), 'HttpTrigger', 'config.json'))
-    # Authentication didn't work
+        ws = Workspace(subscription_id=os.getenv('AZURE_SUB', ''),
+                    resource_group=os.getenv('RESOURCE_GROUP', ''),
+                    workspace_name=os.getenv('WORKSPACE_NAME',''),
+                    auth=svc_pr)
+        print("Found workspace {} at location {} using Azure CLI \
+            authentication".format(ws.name, ws.location))
+    # Usually because authentication didn't work
     except ProjectSystemException as err:
+        print('Authentication did not work.')
         return json.dumps('ProjectSystemException')
     # Need to create the workspace
     except Exception as err:
         ws = Workspace.create(name=os.getenv('WORKSPACE_NAME', ''),
-                      subscription_id=os.getenv('AZURE_SUB', ''), 
-                      resource_group=os.getenv('RESOURCE_GROUP', ''),
-                      create_resource_group=True,
-                      location='eastus2' # Or other supported Azure region   
-                     )
+                    subscription_id=os.getenv('AZURE_SUB', ''), 
+                    resource_group=os.getenv('RESOURCE_GROUP', ''),
+                    create_resource_group=True,
+                    location='westus', # Or other supported Azure region   
+                    auth=svc_pr)
+        print("Created workspace {} at location {}".format(ws.name, ws.location))
 
-        
+       
 
     # choose a name for your cluster - under 16 characters
     cluster_name = "gpuforpytorch"

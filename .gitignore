@@ -8,6 +8,8 @@ edge
 Publish
 config.json
 data
+extensions.*
+.vscode
 
 *.user
 *.suo

@@ -84,6 +84,71 @@ On unix systems (including macOS), the command is:
     .env/bin/pip install -r requirements.txt
 ```
 
+#### Set up a Service Principal as an Azure Active Directory registered application
+
+This is so that we can authenticate in Azure in code, as we will do for the AzureML workspace, without a requirement for interactive or CLI-based login.
+
+Follow the brief instructions under "Service Principal Authentication" in <a href="https://github.com/Azure/MachineLearningNotebooks/blob/master/how-to-use-azureml/manage-azureml-service/authentication-in-azureml/authentication-in-azure-ml.ipynb" target="_blank">this doc</a> for setting up the application that will allow authentication more easily.
+
+Take note of the variables mentioned in the doc for the next section.
+
+#### Set up environment variables 
+
+This is so that AzureML, Service Principal and correct storage accounts may be accessed.
+
+**For local testing**
+
+Create a file called `set_vars.sh` with the following contents.
+
+Unix systems:
+
+```
+export AZURE_SUB=<Azure subscription id>
+export RESOURCE_GROUP=<resource group for AzureML>
+export WORKSPACE_NAME=<workspace name>
+export STORAGE_CONTAINER_NAME_TRAINDATA=<storage blob for training data>
+export STORAGE_CONTAINER_NAME_MODELS=<storage blob for trained model(s)>
+export STORAGE_ACCOUNT_NAME=<storage account name>
+export STORAGE_ACCOUNT_KEY=<storage account key>
+export TENANT_ID=<tenant id from AAD>
+export APP_ID=<registered application id>
+export PRINCIPAL_PASSWORD=<service principal password>
+```
+
+Windows:
+
+```
+set AZURE_SUB <Azure subscription id>
+set RESOURCE_GROUP <resource group for AzureML>
+set WORKSPACE_NAME <workspace name>
+set STORAGE_CONTAINER_NAME_TRAINDATA <storage blob for training data>
+set STORAGE_CONTAINER_NAME_MODELS <storage blob for trained model(s)>
+set STORAGE_ACCOUNT_NAME <storage account name>
+set STORAGE_ACCOUNT_KEY <storage account key>
+set TENANT_ID <tenant id from AAD>
+set APP_ID <registered application id>
+set PRINCIPAL_PASSWORD <service principal password>
+```
+
+Run each file in a bash shell.
+
+Further descriptions of the environment variables:
+
+1. `AZURE_SUB` - the Azure Subscription id
+2. `RESOURCE_GROUP` - the resource group in which AzureML Workspace is found
+3. `WORKSPACE_NAME` - the AzureML Workspace name (create this if it doesn't exist - [with code](https://docs.microsoft.com/en-us/azure/machine-learning/service/quickstart-create-workspace-with-python) or [in Azure Portal](https://docs.microsoft.com/en-us/azure/machine-learning/service/quickstart-get-started))
+4. `STORAGE_CONTAINER_NAME_TRAINDATA` - the Blob Storage container name containing the training data (in this sample is was fish images - see [Data setup](#data-setup) above.
+5. `STORAGE_CONTAINER_NAME_MODELS` - the specific Blob Storage container where the output model should go (this could be the same as the `STORAGE_CONTAINER_NAME_TRAINDATA`)
+5. `STORAGE_ACCOUNT_NAME` - the Storage Account name for the training and model blobs
+6. `STORAGE_ACCOUNT_KEY` - the Storage Account access key for the training and model blobs (Note:  these must be in the same Storage Account)
+7.  `TENANT_ID` - from AAD the tenant ID for subscription from Service Principal step
+8.  `APP_ID` - the AAD registered application ID from Service Principal step
+9.  `PRINCIPAL_PASSWORD` - the AAD registered app password from Service Principal step
+
+**For when moving on to Azure deployments**
+
+ Add as a key/value pairs, when performing deployment to Azure, the following under **Application settings** in the "Application settings" configuration link/tab in the Azure Portal under the published Azure Function App.
+
 #### Data setup
 
 In this example the labels are `fish`/`not_fish` for a binary classification scenario in this example which uses the PyTorch framework.  The data structure in this repo is shown in the following image.  For adding training data, use this structure for the scripts to function correctly.
@@ -161,19 +226,7 @@ Publish the Azure Function.
     func azure functionapp publish dnnfuncapp --build-native-deps
 ```
 
-Set up environment variables so that the AzureML and correct storage accounts may be accessed.
-
- Add as a key/value pairs, the following under **Application settings** in the "Application settings" configuration link/tab in the Azure Portal under the published Azure Function App.
-
-1. `AZURE_SUB` - the Azure Subscription id
-2. `RESOURCE_GROUP` - the resource group in which AzureML Workspace is found
-3. `WORKSPACE_NAME` - the AzureML Workspace name (create this if it doesn't exist - [with code](https://docs.microsoft.com/en-us/azure/machine-learning/service/quickstart-create-workspace-with-python) or [in Azure Portal](https://docs.microsoft.com/en-us/azure/machine-learning/service/quickstart-get-started))
-4. `STORAGE_CONTAINER_NAME_TRAINDATA` - the Blob Storage container name containing the training data (in this sample is was fish images - see [Data setup](#data-setup) above.
-5. `STORAGE_CONTAINER_NAME_MODELS` - the specific Blob Storage container where the output model should go (this could be the same as the `STORAGE_CONTAINER_NAME_TRAINDATA`)
-5. `STORAGE_ACCOUNT_NAME` - the Storage Account name for the training and model blobs
-6. `STORAGE_ACCOUNT_KEY` - the Storage Account access key for the training and model blobs (Note:  these must be in the same Storage Account)
-
-Read about how to access data in Blob and elsewhere with the AzureML Python SDK [here](https://docs.microsoft.com/en-us/azure/machine-learning/service/how-to-access-data).
+IMPORTANT NOTE:  Don't forget to add as a key/value pairs, when performing deployment to Azure, the environment variables (from above) under **Application settings** in the "Application settings" configuration link/tab in the Azure Portal under the published Azure Function App.
 
 ### Test deployment
 
@@ -196,6 +249,9 @@ This may time out, but don't worry if this happens.  For proof of successful exe
 4. <a href="https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-function-python" target="_blank">Python Azure Functions</a>
 5. [How to call another function with in an Azure function (StackOverflow)](https://stackoverflow.com/questions/46315734/how-to-call-another-function-with-in-an-azure-function)
 6.  [Creation of virtual environments](https://docs.python.org/3/library/venv.html)
+7.  [How to access data in Blob and elsewhere with the AzureML Python SDK](https://docs.microsoft.com/en-us/azure/machine-learning/service/how-to-access-data)
 
+## Troubleshooting
 
+* Function using the wrong Python:  if there are multiple versions of Python on the system, be sure to preface any `func` commands with `PYTHONPATH=.env/bin/python` to ensure the correct Python interpreter is being used.
 
