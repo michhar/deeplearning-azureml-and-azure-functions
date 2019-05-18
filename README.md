@@ -21,22 +21,22 @@ The following diagram represents an example process as part of a larger deployme
 
 <img src="images/arch_diagram.png" width="100%">
 
-# Getting Started
+# Getting started
 
 The instructions below are an example - it follows [this Azure Docs tutorial](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-function-python) which should be referenced as needed.
 
-The commands are listed here for quick reference (but if errors are encountered, check the docs link above for troubleshooting, as it may have updated).  Note, the dev will still need to `pip install requirements.txt` inside the virtual environment to test locall).
-
-## Deploy Locally
+The commands are listed here for quick reference (but if errors are encountered, check the docs link above for troubleshooting, as it may have updated).
 
 ### Prerequisites
 
-- Install Python 3.6+
+- Install Python 3.6
 - Install [Functions Core Tools](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local#v2)
 - Install Docker
 - Note: If run on Windows, use Ubuntu WSL to run deploy script
 
-### Steps
+## Steps
+
+### Deploy locally
 
 #### Set up virtual environment
 
@@ -51,7 +51,7 @@ Important notes:
 The `venv` command is part of the Python standard library as of version 3.3.  Python 3.6 is being used in this sample.
 
 ```
-    python3.6 -m venv .env
+python3.6 -m venv .env
 ```
 
 **Activate the virtual environment**
@@ -59,13 +59,13 @@ The `venv` command is part of the Python standard library as of version 3.3.  Py
 On Windows, the command is:
 
 ```
-    .env\Scripts\activate
+.env\Scripts\activate
 
 ```
 
 On unix systems (including MacOS), the command is:
 ```
-    source .env/bin/activate
+source .env/bin/activate
 ```
 
 **Install the required Python packages**
@@ -75,13 +75,13 @@ Please check the `requirements.txt` file for versions of packages used.  If a mo
 On Windows, the command is:
 
 ```
-    .env\Scripts\pip install -r requirements.txt
+.env\Scripts\pip install -r requirements.txt
 ```
 
 On unix systems (including macOS), the command is:
 
 ```
-    .env/bin/pip install -r requirements.txt
+.env/bin/pip install -r requirements.txt
 ```
 
 #### Set up a Service Principal as an Azure Active Directory registered application
@@ -100,7 +100,7 @@ This is so that AzureML, Service Principal and correct storage accounts may be a
 
 Create a file called `set_vars.sh` with the following contents.
 
-Unix systems:
+Unix systems create a shell script `set_vars.sh` and run it in the shell where the work is being done:
 
 ```
 export AZURE_SUB=<Azure subscription id>
@@ -115,7 +115,7 @@ export APP_ID=<registered application id>
 export PRINCIPAL_PASSWORD=<service principal password>
 ```
 
-Windows:
+On Windows create a script called `set_vars.cmd` and run it in the shell where the work is being done:
 
 ```
 set AZURE_SUB <Azure subscription id>
@@ -132,7 +132,7 @@ set PRINCIPAL_PASSWORD <service principal password>
 
 Run each file in a bash shell.
 
-Further descriptions of the environment variables:
+Further descriptions of the environment variables are as follows.
 
 1. `AZURE_SUB` - the Azure Subscription id
 2. `RESOURCE_GROUP` - the resource group in which AzureML Workspace is found
@@ -145,13 +145,13 @@ Further descriptions of the environment variables:
 8.  `APP_ID` - the AAD registered application ID from Service Principal step
 9.  `PRINCIPAL_PASSWORD` - the AAD registered app password from Service Principal step
 
-**For when moving on to Azure deployments**
+**Note:  For when moving on to Azure deployments**
 
  Add as a key/value pairs, when performing deployment to Azure, the following under **Application settings** in the "Application settings" configuration link/tab in the Azure Portal under the published Azure Function App.
 
 #### Data setup
 
-In this example the labels are `fish`/`not_fish` for a binary classification scenario in this example which uses the PyTorch framework.  The data structure in this repo is shown in the following image.  For adding training data, use this structure for the scripts to function correctly.
+In this example the labels are `fish`/`not_fish` for a binary classification scenario in this example which uses the PyTorch framework.  The data structure in this repo is shown in the following image.  For adding training data, use this structure so that the Python scripts may find the data.
 
 A `train` and `val` folder are both required for training.  The folders under `train` and `val` are used in PyTorch's `datasets.ImageFolderImage()` function that delineates the labels using folder names, a common pattern for classification.
 
@@ -164,10 +164,10 @@ Notice that the `data` folder is under the Function's `HttpTrigger` folder.
 
 **Start the function**
 
-From the base of the repo:
+From the base of the repo run:
 
 ```   
-    func host start
+func host start
 ```
 
 Information similar to the following should appear:
@@ -184,11 +184,11 @@ For now this can be a POST request using `https://<base url>/api/HttpTrigger?sta
 One way to call the Function App, for e.g., is:
 
 ```
-    curl http://localhost:7071/api/HttpTrigger?start=foo
+curl http://localhost:7071/api/HttpTrigger?start=foo
 ```
 
 
-## Deploy function to Azure
+### Deploy function to Azure
 
 Use the following commands to deploy the function to Azure from a local machine that _has this repo cloned locally_.
 
@@ -197,38 +197,38 @@ Here is an example of deploying this sample to `westus` region.  Update the `--l
 Use the Azure CLI to log in.
 
 ```
-    az login
+az login
 ```
 
 Create a resource group for the Azure Function.
 
 ```
-    az group create --name azfunc --location westus
+az group create --name azfunc --location westus
 ```
 
 Create a storage account for the Azure Function.
 
 ```
-    az storage account create --name azfuncstorage123 --location westus --resource-group azfunc --sku Standard_LRS
+az storage account create --name azfuncstorage123 --location westus --resource-group azfunc --sku Standard_LRS
 
 ```
 
 Create the Azure Function.
 
 ```
-    az functionapp create --resource-group azfunc --os-type Linux --consumption-plan-location westus --runtime python --name dnnfuncapp --storage-account azfuncstorage123
+az functionapp create --resource-group azfunc --os-type Linux --consumption-plan-location westus --runtime python --name dnnfuncapp --storage-account azfuncstorage123
 
 ```
 
 Publish the Azure Function.
 
 ```
-    func azure functionapp publish dnnfuncapp --build-native-deps
+func azure functionapp publish dnnfuncapp --build-native-deps
 ```
 
 IMPORTANT NOTE:  Don't forget to add as a key/value pairs, when performing deployment to Azure, the environment variables (from above) under **Application settings** in the "Application settings" configuration link/tab in the Azure Portal under the published Azure Function App.
 
-### Test deployment
+#### Test deployment
 
 For now this can be a POST request using `https://<base url>/api/HttpTrigger?start=<any string>`, where `start` is specified as the parameter in the Azure Function `__init__.py` code and the value is any string (this is a potential entrypoint for passing a variable to the Azure Function in the future).
 
@@ -236,8 +236,10 @@ For now this can be a POST request using `https://<base url>/api/HttpTrigger?sta
 One way to call the Function App, for e.g., is:
 
 ```
-    curl https://dnnfuncapp.azurewebsites.net/api/HttpTrigger?start=foo
+curl https://dnnfuncapp.azurewebsites.net/api/HttpTrigger?start=foo
 ```
+
+Or to go to the browser and enter in the same URL.
 
 This may time out, but don't worry if this happens.  For proof of successful execution check for a completed AzureML Experiment run in the Azure Portal ML Workspace and look for the model in the blob storage as well (specified earlier in STORAGE_CONTAINER_NAME_MODELS).
 
